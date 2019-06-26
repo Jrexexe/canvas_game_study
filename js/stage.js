@@ -1,8 +1,8 @@
 
 var canvas = document.createElement("canvas");
 var ctx = canvas.getContext("2d");
-canvas.width = 512;
-canvas.height = 480;
+canvas.width = 1080;
+canvas.height = 1900;
 document.body.appendChild(canvas);
 
 
@@ -21,7 +21,8 @@ var starLightImg = new Image();
 starLightImg.onload = function () {
     starLightReady = true;
 };
-
+starLightImg.width = 200
+starLightImg.height = 200
 starLightImg.src = "images/rope/star_l.png";
 
 // Star_d image
@@ -31,6 +32,8 @@ starDarkImg.onload = function () {
     starDarkReady = true;
 };
 starDarkImg.src = "images/rope/star_d.png";
+starDarkImg.width = 200
+starDarkImg.height = 200
 
 let game_ready = false;
 
@@ -38,18 +41,31 @@ let game_ready = false;
 // Game objects
 
 let gameConfig={
-    speed : 200, // 数度
+    speed : 400, // 数度
     round : 10, //轮数
     index:0,
     left:[2,4,6,8,10,12,14],
     right:[1,3,5,7,9,12,14]
 }
 
+
+let l_x = 320
+let r_x = 600
+
 let starFall={
-    left:[],
-    right:[]
+    left:[
+        {imgSrc:starDarkImg,x:l_x,y:0,scale:0},
+        {imgSrc:starDarkImg,x:l_x,y:400,scale:0},
+        {imgSrc:starDarkImg,x:l_x,y:800,scale:0},
+        ],
+    right:[
+        {imgSrc:starDarkImg,x:r_x,y:-200,scale:0},
+        {imgSrc:starDarkImg,x:r_x,y:300,scale:0},
+        {imgSrc:starDarkImg,x:r_x,y:600,scale:0},
+    ]
 }
 let star_y = 0;
+let star_x = 0;
 let canHitDistanceFromTop = 900; //多长的距离能够击打从上面掉下来的星星
 
 // Handle keyboard controls
@@ -73,8 +89,45 @@ var next = function () {
 };
 
 
+
+let x_aphe = 20
+let scale_r = .06
+let starSize={}
+starSize.w = 100;
+starSize.h = 100;
+
 // Update game objects
 var update = function (modifier) {
+    function starAnimition(item,index) {
+        item.y +=gameConfig.speed * modifier;
+        if (item.x<361){
+            item.x -= x_aphe * modifier;
+            if ( item.y >= 1700){
+                item.y = 0;
+                item.x = l_x;
+            }
+        } else {
+            item.x += x_aphe * modifier;
+            if ( item.y >= 1700){
+                item.y = 0;
+                item.x = r_x;
+            }
+        }
+
+
+        if (item.y > 800 && item.imgSrc !== starLightImg) {
+            item.imgSrc = starLightImg;
+        }
+        if (item.y <= 800 && item.imgSrc !== starDarkImg) {
+            item.imgSrc = starDarkImg;
+        }
+
+    }
+    starFall.left.forEach(starAnimition)
+    starFall.right.forEach(starAnimition)
+    // 切换状态
+    //  移动 放大
+
     if ('Space' in keysDown) { // Player holding up
         // hero.y -= hero.speed * modifier;
         console.log("Space");
@@ -82,19 +135,29 @@ var update = function (modifier) {
     }else if ('ArrowLeft' in keysDown) { // Player holding up
         // hero.y -= hero.speed * modifier;
         console.log("<-");
-        star_y --;
+        gameConfig.speed --;
     }else if ('ArrowRight' in keysDown) { // Player holding up
         // hero.y -= hero.speed * modifier;
-        star_y ++;
+        gameConfig.speed ++;
         console.log("->");
     }
 };
 
 
+
 // Draw everything
 var render = function () {
-    if (starDarkReady) {
-        ctx.drawImage(starLightImg, 0, star_y);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if (starDarkReady && starLightReady) {
+        function drawStar(item) {
+            let s_w = starSize.w + item.y * scale_r
+            let s_h = starSize.h + item.y * scale_r
+            ctx.drawImage(item.imgSrc, item.x, item.y,s_w,s_h);
+        }
+        starFall.left.forEach( drawStar)
+        starFall.right.forEach( drawStar)
+
+
     }
     // if (bgReady) {
     //     ctx.drawImage(bgImage, 0, 0);
